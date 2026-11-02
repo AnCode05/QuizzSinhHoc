@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz học tập · Ôn tập kiến thức</title>
+<style>
+  :root{
+    --bg:#f2f5fb;
+    --card:#ffffff;
+    --text:#16203a;
+    --muted:#6b7794;
+    --border:#e3e8f2;
+    --opt-bg:#ffffff;
+    --primary:#5b8cff;
+    --primary-2:#7c4dff;
+    --ok:#16a34a;
+    --ok-bg:#e8f8ee;
+    --bad:#e5484d;
+    --bad-bg:#fdecec;
+    --hint:#b8860b;
+    --hint-bg:#fff8e1;
+    --shadow:0 10px 30px rgba(28,45,90,.08);
+    --shadow-sm:0 4px 14px rgba(28,45,90,.06);
+  }
+  [data-theme="dark"]{
+    --bg:#0e1320;
+    --card:#161c2c;
+    --text:#e8edf8;
+    --muted:#94a1bd;
+    --border:#26304a;
+    --opt-bg:#1b2334;
+    --primary:#6f9bff;
+    --primary-2:#a07cff;
+    --ok:#3ddc84;
+    --ok-bg:#12281c;
+    --bad:#ff6b6b;
+    --bad-bg:#2a1518;
+    --hint:#ffd166;
+    --hint-bg:#2a2415;
+    --shadow:0 10px 30px rgba(0,0,0,.45);
+    --shadow-sm:0 4px 14px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    padding:22px 16px 70px;
+    font-family:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    transition:background .3s ease,color .3s ease;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:
+      radial-gradient(620px 420px at 8% -8%, rgba(91,140,255,.28), transparent 62%),
+      radial-gradient(620px 420px at 102% 2%, rgba(124,77,255,.22), transparent 62%);
+  }
+
+  .app{max-width:880px;margin:0 auto}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;margin-bottom:22px;padding:15px 18px;
+    background:color-mix(in srgb,var(--card) 78%,transparent);
+    border:1px solid color-mix(in srgb,var(--border) 82%,transparent);
+    border-radius:20px;box-shadow:var(--shadow-sm);
+    backdrop-filter:blur(14px);
+  }
+  .brand{display:flex;align-items:center;gap:13px}
+  .brand-copy{display:flex;flex-direction:column;gap:3px}
+  .eyebrow{font-size:.66rem;font-weight:800;letter-spacing:1.35px;color:var(--primary);text-transform:uppercase}
+  .brand p{margin:0;font-size:.8rem;color:var(--muted);font-weight:500}
+  .brand h1{
+    margin:0;font-size:1.22rem;letter-spacing:-.4px;font-weight:800;
+    background:linear-gradient(100deg,var(--primary),var(--primary-2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .logo{width:48px;height:48px;flex:0 0 48px;filter:drop-shadow(0 6px 14px rgba(91,140,255,.35))}
+
+  .theme-btn{
+    width:46px;height:46px;border-radius:14px;border:1px solid var(--border);
+    background:var(--card);color:var(--text);cursor:pointer;
+    display:grid;place-items:center;box-shadow:var(--shadow-sm);
+    transition:transform .18s ease,border-color .18s ease,background .3s;
+  }
+  .theme-btn:hover{transform:translateY(-2px) rotate(-6deg);border-color:var(--primary)}
+  .theme-btn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  [data-theme="light"] .i-sun{display:none}
+  [data-theme="dark"]  .i-moon{display:none}
+
+  /* ---------- Stats ---------- */
+  .stats{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;
+  }
+  .stat{
+    background:color-mix(in srgb,var(--card) 92%,var(--primary) 8%);
+    border:1px solid var(--border);border-radius:17px;
+    padding:13px 16px;display:flex;align-items:center;gap:11px;
+    box-shadow:var(--shadow-sm);transition:background .3s,border-color .3s,transform .2s;
+  }
+  .stat:hover{transform:translateY(-2px)}
+  .stat .dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
+  .stat.ok .dot{background:var(--ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 18%,transparent)}
+  .stat.bad .dot{background:var(--bad);box-shadow:0 0 0 4px color-mix(in srgb,var(--bad) 18%,transparent)}
+  .stat.idx .dot{background:var(--primary);box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 18%,transparent)}
+  .stat b{display:block;font-size:1.05rem;line-height:1.1}
+  .stat small{color:var(--muted);font-size:.72rem;font-weight:600;letter-spacing:.3px}
+
+  .progress{
+    height:9px;border-radius:99px;background:var(--border);overflow:hidden;margin-bottom:22px;
+    box-shadow:inset 0 1px 2px rgba(20,30,60,.08);
+  }
+  .progress .bar{
+    height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,var(--primary),var(--primary-2));
+    transition:width .45s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ---------- Card ---------- */
+  .card{
+    position:relative;overflow:hidden;
+    background:var(--card);border:1px solid var(--border);border-radius:24px;
+    padding:30px 30px 25px;box-shadow:var(--shadow);
+    transition:background .3s,border-color .3s;
+    animation:pop .34s cubic-bezier(.2,.8,.3,1);
+  }
+  .card::before{
+    content:"";position:absolute;top:0;left:30px;right:30px;height:3px;
+    border-radius:0 0 8px 8px;background:linear-gradient(90deg,var(--primary),var(--primary-2));
+  }
+  @keyframes pop{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+  .qtext{
+    margin:0 0 18px;font-size:1.12rem;line-height:1.55;font-weight:700;letter-spacing:-.2px;
+  }
+
+  .options{display:flex;flex-direction:column;gap:11px}
+  .option{
+    display:flex;align-items:flex-start;gap:13px;width:100%;text-align:left;
+    padding:14px 16px;border-radius:15px;cursor:pointer;
+    font:inherit;font-size:.96rem;line-height:1.5;color:var(--text);
+    background:var(--opt-bg);border:1.6px solid var(--border);
+    transition:border-color .16s,transform .16s,box-shadow .16s,background .25s,color .25s;
+  }
+  .option:hover:not(:disabled){
+    border-color:var(--primary);transform:translateY(-2px);
+    box-shadow:0 8px 20px color-mix(in srgb,var(--primary) 22%,transparent);
+  }
+  :where(button):focus-visible{outline:3px solid color-mix(in srgb,var(--primary) 70%,white);outline-offset:3px}
+  .option:disabled{cursor:default}
+  .badge{
+    flex:0 0 27px;width:27px;height:27px;border-radius:9px;display:grid;place-items:center;
+    font-size:.8rem;font-weight:800;color:var(--muted);
+    background:color-mix(in srgb,var(--muted) 13%,transparent);
+    transition:background .2s,color .2s;
+  }
+  .option.correct{border-color:var(--ok);background:var(--ok-bg)}
+  .option.correct .badge{background:var(--ok);color:#fff}
+  .option.wrong{border-color:var(--bad);background:var(--bad-bg)}
+  .option.wrong .badge{background:var(--bad);color:#fff}
+  .option.dim{opacity:.55}
+
+  /* ---------- Hint ---------- */
+  .hint-wrap{margin-top:16px}
+  .hint-btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:9px 16px;border-radius:12px;cursor:pointer;
+    font:inherit;font-size:.86rem;font-weight:700;letter-spacing:.2px;
+    color:var(--hint);background:var(--hint-bg);
+    border:1.4px dashed color-mix(in srgb,var(--hint) 55%,transparent);
+    transition:transform .16s,box-shadow .16s,opacity .2s;
+  }
+  .hint-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px color-mix(in srgb,var(--hint) 25%,transparent)}
+  .hint-btn .bulb{font-size:1rem;line-height:1}
+  .hint-content{
+    margin-top:10px;padding:13px 16px;border-radius:13px;
+    font-size:.9rem;line-height:1.55;font-weight:500;
+    color:var(--text);background:var(--hint-bg);
+    border:1px solid color-mix(in srgb,var(--hint) 40%,transparent);
+    animation:pop .28s ease;
+  }
+  .hint-content strong{color:var(--hint)}
+  [hidden]{display:none !important}
+
+  /* ---------- Feedback ---------- */
+  .feedback{
+    margin-top:16px;padding:13px 16px;border-radius:14px;font-size:.9rem;
+    font-weight:600;display:none;animation:pop .28s ease;
+  }
+  .feedback.show{display:block}
+  .feedback.ok{background:var(--ok-bg);color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 35%,transparent)}
+  .feedback.bad{background:var(--bad-bg);color:var(--bad);border:1px solid color-mix(in srgb,var(--bad) 35%,transparent)}
+
+  /* ---------- Buttons ---------- */
+  .actions{display:flex;justify-content:flex-end;margin-top:18px}
+  .btn{
+    border:none;cursor:pointer;font:inherit;font-weight:700;font-size:.94rem;
+    padding:13px 26px;border-radius:14px;color:#fff;
+    background:linear-gradient(100deg,var(--primary),var(--primary-2));
+    box-shadow:0 10px 22px color-mix(in srgb,var(--primary) 38%,transparent);
+    transition:transform .16s,box-shadow .16s,opacity .2s;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 14px 28px color-mix(in srgb,var(--primary) 46%,transparent)}
+  .btn:active{transform:translateY(0)}
+  .btn[hidden]{display:none}
+
+  /* ---------- Result ---------- */
+  .result{text-align:center;padding:8px 0 4px;animation:pop .4s ease}
+  .ring{
+    width:170px;height:170px;border-radius:50%;margin:6px auto 20px;
+    display:grid;place-items:center;
+    background:conic-gradient(var(--ok) calc(var(--p) * 1%), var(--border) 0);
+    transition:background .6s ease;
+  }
+  .ring-in{
+    width:132px;height:132px;border-radius:50%;background:var(--card);
+    display:grid;place-items:center;align-content:center;gap:2px;
+    box-shadow:inset 0 0 0 1px var(--border);
+  }
+  .ring-in b{font-size:2rem;line-height:1;letter-spacing:-1px}
+  .ring-in small{font-size:.72rem;color:var(--muted);font-weight:700;letter-spacing:.6px}
+  .result h2{margin:0 0 8px;font-size:1.35rem;letter-spacing:-.4px}
+  .result p{margin:0 0 20px;color:var(--muted);font-size:.94rem}
+  .result .pills{display:flex;justify-content:center;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+  .pill{
+    padding:9px 16px;border-radius:12px;font-size:.85rem;font-weight:700;
+    border:1px solid var(--border);background:var(--opt-bg);
+  }
+  .pill.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+  .pill.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,transparent)}
+
+  @media (max-width:560px){
+    body{padding:12px 12px 42px}
+    .topbar{padding:12px 13px;border-radius:17px;margin-bottom:16px}
+    .card{padding:23px 17px 18px;border-radius:19px}
+    .card::before{left:18px;right:18px}
+    .qtext{font-size:1.02rem}
+    .option{font-size:.9rem;padding:12px 13px}
+    .stat{padding:9px 10px;gap:8px}
+    .stat b{font-size:.95rem}
+    .stat small{font-size:.66rem}
+    .brand h1{font-size:1.02rem}
+    .logo{width:42px;height:42px;flex-basis:42px}
+    .theme-btn{width:42px;height:42px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== Header ===== -->
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#5b8cff"/>
+            <stop offset="1" stop-color="#7c4dff"/>
+          </linearGradient>
+        </defs>
+        <rect width="48" height="48" rx="14" fill="url(#lg)"/>
+        <path d="M24 17c-4.2-3.3-9-3.2-13-.8v17c4-2.4 8.8-2.5 13 .8 4.2-3.3 9-3.2 13-.8v-17c-4-2.4-8.8-2.5-13 .8Z"
+              fill="none" stroke="#fff" stroke-width="2.3" stroke-linejoin="round"/>
+        <path d="M24 17v17" stroke="#fff" stroke-width="2.3" stroke-linecap="round"/>
+        <path d="M15.5 21.5c2-.7 4.2-.5 6 .3M32.5 21.5c-2-.7-4.2-.5-6 .3"
+              fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <span class="eyebrow">Không gian học tập</span>
+        <h1>Quiz học tập</h1>
+        <p>Ôn tập kiến thức Sinh Học · 33 câu hỏi</p>
+      </div>
+    </div>
+
+    <button class="theme-btn" id="themeBtn" title="Chuyển chế độ sáng / tối" aria-label="Đổi giao diện">
+      <svg class="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </header>
+
+  <!-- ===== Status bar ===== -->
+  <section class="stats">
+    <div class="stat ok"><span class="dot"></span><div><b id="sCorrect">0</b><small>ĐÚNG</small></div></div>
+    <div class="stat bad"><span class="dot"></span><div><b id="sWrong">0</b><small>SAI</small></div></div>
+    <div class="stat idx"><span class="dot"></span><div><b id="sIndex">1/33</b><small>CÂU HỎI</small></div></div>
+  </section>
+  <div class="progress"><div class="bar" id="bar"></div></div>
+
+  <!-- ===== Quiz card ===== -->
+  <main class="card" id="card"></main>
+</div>
+
+<script>
+/* =========================================================
+   DỮ LIỆU CÂU HỎI  (c: chỉ số đáp án đúng trong mảng gốc,
+                     hint: gợi ý hiển thị khi bấm nút)
+   ========================================================= */
+const QUESTIONS = [
+  {
+    "q": "Câu 2: Cho các thành phần sau đây: (1) CO2, (2) ATP, (3) O2, (4) H2O, (5) ethanol, (6) glucose. Có bao nhiêu thành phần có thể là sản phẩm của quá trình hô hấp hiếu khí ở thực vật?",
+    "a": ["1", "2", "3", "4"],
+    "c": 2,
+    "hint": "Hô hấp hiếu khí tạo CO2, ATP và H2O; O2 là nguyên liệu, ethanol là sản phẩm lên men, glucose là cơ chất."
+  },
+  {
+    "q": "Câu 3: Cho các thành phần sau đây: (1) CO2, (2) ATP, (3) O2, (4) H2O, (5) ethanol, (6) glucose. Có bao nhiêu thành phần có thể là sản phẩm của quá trình hô hấp ở thực vật?",
+    "a": ["1", "2", "3", "4"],
+    "c": 3,
+    "hint": "Hô hấp ở thực vật gồm hiếu khí và lên men: sản phẩm có thể là CO2, ATP, H2O, ethanol."
+  },
+  {
+    "q": "Câu 10: Điểm giống nhau giữa thực vật C3, C4 và CAM trong pha tối quang hợp là",
+    "a": [
+      "đều có lục lạp ở tế bào mô giậu và tế bào bao bó mạch.",
+      "đều sử dụng RuBP làm chất nhận CO2.",
+      "đều tạo ra chất hữu cơ đầu tiên là 3-PGA.",
+      "đều xảy ra chu trình Calvin."
+    ],
+    "c": 3,
+    "hint": "Cả C3, C4 và CAM đều có chu trình Calvin để cố định CO2 tạo carbohydrate."
+  },
+  {
+    "q": "Câu 75: Điểm bù ánh sáng là cường độ ánh sáng mà ở đó, cường độ quang hợp (Ia)",
+    "a": [
+      "lớn hơn cường độ hô hấp (Ih).",
+      "cân bằng với cường độ hô hấp (Ih).",
+      "nhỏ hơn cường độ hô hấp (Ih).",
+      "lớn gấp 2 lần cường độ hô hấp (Ih)."
+    ],
+    "c": 1,
+    "hint": "Điểm bù ánh sáng là cường độ ánh sáng tại đó quang hợp cân bằng hô hấp."
+  },
+  {
+    "q": "Câu 76: Điểm bão hòa ánh sáng là cường độ ánh sáng tối đa để",
+    "a": [
+      "cường độ quang hợp đạt cực đại.",
+      "cường độ quang hợp đạt cực tiểu.",
+      "cường độ quang hợp đạt trung bình.",
+      "cây không thể quang hợp được."
+    ],
+    "c": 0,
+    "hint": "Vượt qua điểm bão hòa, cường độ quang hợp không tăng thêm."
+  },
+  {
+    "q": "Câu 92: Cho sơ đồ về mối quan hệ giữa quang hợp của thực vật C3, C4 với cường độ ánh sáng (hình 1) và với nhiệt độ (hình 2). Hãy cho biết kết luận nào sau đây về đường cong của nhóm thực vật là đúng?",
+    "a": [
+      "Thực vật C3 có đường II, IV.",
+      "Thực vật C4 có đường I, IV.",
+      "Thực vật C4 có đường II, III.",
+      "Thực vật C3 có đường I, III."
+    ],
+    "c": 0,
+    "hint": "Thực vật C3 có điểm bão hòa ánh sáng thấp hơn và nhiệt độ tối ưu thấp hơn C4."
+  },
+  {
+    "q": "Câu 97: Ở vùng khí hậu khô nóng, năng suất sinh học của các nhóm thực vật theo thứ tự là:",
+    "a": [
+      "C4 > C3 > CAM.",
+      "C3 > C4 > CAM.",
+      "C4 > CAM > C3.",
+      "CAM > C4 > C3."
+    ],
+    "c": 2,
+    "hint": "Ở khô nóng, C4 có năng suất cao nhất, CAM thích nghi hạn tốt hơn C3."
+  },
+  {
+    "q": "Câu 2: Phương trình tổng quát của quá trình hô hấp ở thực vật là gì?",
+    "a": [
+      "C6H12O6 + 6O2 → 6CO2 + 6H2O.",
+      "6CO2 + 6H2O → C6H12O6 + 6O2.",
+      "6CO2 + 6H2O + Q (ATP + nhiệt) → C6H12O6 + 6O2.",
+      "C6H12O6 + 6O2 → 6CO2 + 6H2O + Q (ATP + nhiệt)."
+    ],
+    "c": 3,
+    "hint": "Hô hấp hiếu khí giải phóng CO2, H2O và năng lượng dạng ATP và nhiệt."
+  },
+  {
+    "q": "Câu 9: Bản chất của hô hấp tế bào là quá trình chuyển hóa:",
+    "a": [
+      "quang năng → hóa năng + nhiệt năng.",
+      "hóa năng → hóa năng (ATP) + nhiệt năng.",
+      "hóa năng → cơ năng + nhiệt năng.",
+      "hóa năng → điện năng + nhiệt năng."
+    ],
+    "c": 1,
+    "hint": "Hô hấp chuyển hóa năng lượng trong chất hữu cơ thành ATP và nhiệt."
+  },
+  {
+    "q": "Câu 11: Quá trình đường phân trong hô hấp hiếu khí ở thực vật diễn ra tại vị trí nào của tế bào?",
+    "a": [
+      "Chất nền ti thể.",
+      "Tế bào chất (Bào tương).",
+      "Màng trong ti thể.",
+      "Chất nền lục lạp."
+    ],
+    "c": 1,
+    "hint": "Đường phân xảy ra trong tế bào chất, không cần O2."
+  },
+  {
+    "q": "Câu 11: Giai đoạn nào trong hô hấp hiếu khí tạo ra nhiều phân tử ATP nhất cho tế bào thực vật?",
+    "a": [
+      "Đường phân.",
+      "Oxy hóa pyruvate.",
+      "Chu trình Krebs.",
+      "Chuỗi truyền electron."
+    ],
+    "c": 3,
+    "hint": "Chuỗi truyền electron tạo ATP nhiều nhất nhờ hóa thẩm thấu."
+  },
+  {
+    "q": "Câu 12: Khi tăng nồng độ CO2 trong không khí thì cường độ hô hấp của thực vật sẽ giảm. Nguyên nhân chủ yếu là",
+    "a": [
+      "nồng độ CO2 trong môi trường tăng làm giảm nồng độ O2.",
+      "nồng độ CO2 trong môi trường tăng làm ức chế quá trình thải CO2 của cơ thể.",
+      "nồng độ CO2 trong môi trường tăng làm tăng nồng độ O2.",
+      "nồng độ CO2 trong môi trường tăng làm tăng quá trình thải CO2 của cơ thể."
+    ],
+    "c": 1,
+    "hint": "CO2 cao ức chế hô hấp, hạn chế thải CO2 ra môi trường."
+  },
+  {
+    "q": "Câu 12: Trong môi trường bảo quản nông sản, người ta tăng nồng độ CO2 ở mức độ thích hợp nhằm mục đích",
+    "a": [
+      "ức chế hoạt động phân giải của vi sinh vật.",
+      "tạo điều kiện cho nông phẩm lên men.",
+      "ức chế hoạt động hô hấp của nông sản.",
+      "duy trì trạng thái tiềm sinh của nông sản."
+    ],
+    "c": 2,
+    "hint": "Tăng CO2 giúp giảm hô hấp, kéo dài thời gian bảo quản nông sản."
+  },
+  {
+    "q": "Câu 16: Các giai đoạn chính của hô hấp hiếu khí diễn ra theo trật tự nào?",
+    "a": [
+      "Chu trình Krebs → Đường phân → Chuỗi truyền electron hô hấp.",
+      "Đường phân → Chuỗi truyền electron hô hấp → Chu trình Krebs.",
+      "Đường phân → Chu trình Krebs → Chuỗi truyền electron hô hấp.",
+      "Chuỗi truyền electron hô hấp → Chu trình Krebs → Đường phân."
+    ],
+    "c": 2,
+    "hint": "Thứ tự: đường phân → chu trình Krebs → chuỗi truyền electron."
+  },
+  {
+    "q": "Câu 23: Sơ đồ tóm tắt nào sau đây thể hiện đúng quá trình đường phân?",
+    "a": [
+      "1 glucose → 2 pyruvic acid + 2 ATP + 2NADH.",
+      "1 glucose → 2 pyruvic acid + CO2 + ATP.",
+      "1 glucose → 2 pyruvic acid + nước + ATP.",
+      "1 glucose → 2 CO2 + nước + 2ATP."
+    ],
+    "c": 0,
+    "hint": "Đường phân: 1 glucose tạo 2 pyruvic acid, 2 ATP và 2 NADH."
+  },
+  {
+    "q": "Câu 10: Hệ sắc tố quang hợp phân bố chủ yếu ở đâu?",
+    "a": [
+      "xoang thylakoid.",
+      "màng thylakoid.",
+      "chất nền lục lạp.",
+      "màng trong lục lạp."
+    ],
+    "c": 1,
+    "hint": "Sắc tố quang hợp nằm trên màng thylakoid."
+  },
+  {
+    "q": "Câu 17: Các sắc tố quang hợp hấp thụ năng lượng ánh sáng và truyền cho nhau theo sơ đồ nào sau đây?",
+    "a": [
+      "Carotenoid → Diệp lục b → Diệp lục a → Diệp lục a ở trung tâm phản ứng.",
+      "Carotenoid → Diệp lục a → Diệp lục b → Diệp lục b ở trung tâm phản ứng.",
+      "Diệp lục b → Carotenoid → Diệp lục a → Diệp lục a ở trung tâm phản ứng.",
+      "Diệp lục a → Diệp lục b → Carotenoid → Carotenoid ở trung tâm phản ứng."
+    ],
+    "c": 0,
+    "hint": "Năng lượng truyền theo hướng carotenoid → diệp lục b → diệp lục a → trung tâm phản ứng."
+  },
+  {
+    "q": "Câu 8: Các sản phẩm được tạo ra từ pha sáng của quá trình quang hợp bao gồm:",
+    "a": [
+      "O2, ATP và NADPH.",
+      "CO2, ATP và NADPH.",
+      "Nước, ATP và Glucose.",
+      "G3P, ATP và NADP+."
+    ],
+    "c": 0,
+    "hint": "Pha sáng tạo O2, ATP và NADPH."
+  },
+  {
+    "q": "Câu 8: Quá trình quang phân li nước trong pha sáng quang hợp tạo ra các sản phẩm nào sau đây?",
+    "a": [
+      "CO2, ATP, NADPH.",
+      "O2, electron (e-), H+.",
+      "Glucose, O2, H2O.",
+      "3-PGA, RuBP, G3P."
+    ],
+    "c": 1,
+    "hint": "Quang phân li nước tạo O2, electron và H+."
+  },
+  {
+    "q": "Câu 24: Trong quang hợp ở thực vật, pha sáng là pha:",
+    "a": [
+      "khử (cố định) CO2 để hình thành carbohydrate từ ATP và NADPH.",
+      "chuyển hóa quang năng được diệp lục hấp thụ thành hóa năng trong ATP và NADPH.",
+      "chuyển hóa hóa năng trong ATP và NADPH thành quang năng.",
+      "chuyển hóa hóa năng trong CO2 và H2O thành hóa năng trong ATP và NADPH."
+    ],
+    "c": 1,
+    "hint": "Pha sáng chuyển quang năng thành hóa năng trong ATP và NADPH."
+  },
+  {
+    "q": "Câu 25: Ở thực vật, nơi diễn ra của pha sáng quang hợp là",
+    "a": [
+      "màng ngoài lục lạp.",
+      "màng trong lục lạp.",
+      "màng thylakoid.",
+      "chất nền lục lạp."
+    ],
+    "c": 2,
+    "hint": "Pha sáng diễn ra trên màng thylakoid."
+  },
+  {
+    "q": "Câu 26: Ở thực vật, nguyên liệu của pha sáng gồm:",
+    "a": [
+      "ATP, NADPH, O2.",
+      "ATP, NADPH, CO2.",
+      "H2O, ADP, NADP+.",
+      "carbohydrate, O2."
+    ],
+    "c": 2,
+    "hint": "Pha sáng dùng H2O, ADP và NADP+."
+  },
+  {
+    "q": "Câu 27: Ở thực vật, sản phẩm của pha sáng gồm:",
+    "a": [
+      "ADP, NADPH, O2.",
+      "ATP, NADPH, CO2.",
+      "carbohydrate, CO2.",
+      "ATP, NADPH, O2."
+    ],
+    "c": 3,
+    "hint": "Pha sáng tạo ATP, NADPH và O2."
+  },
+  {
+    "q": "Câu 34: Trong pha sáng, ATP và NADPH được trực tiếp tạo ra từ quá trình nào sau đây?",
+    "a": [
+      "quá trình quang phân li nước.",
+      "quá trình diệp lục hấp thụ ánh sáng.",
+      "hoạt động của chuỗi truyền electron quang hợp.",
+      "sự hấp thụ năng lượng của nước."
+    ],
+    "c": 2,
+    "hint": "Chuỗi truyền electron quang hợp tạo ATP và NADPH."
+  },
+  {
+    "q": "Câu 35: Cho phương trình quang phân li nước sau đây. Chất [3] là chất nào trong các hợp chất dưới đây? H2O → 4H+ + 4e- + [3]",
+    "a": ["NADPH.", "ATP.", "CO2.", "O2."],
+    "c": 3,
+    "hint": "Quang phân li nước giải phóng O2."
+  },
+  {
+    "q": "Câu 44: Nói về sản phẩm của pha sáng quang hợp, điều nào sau đây không đúng?",
+    "a": [
+      "Các electron được giải phóng từ quang phân li nước sẽ bù cho diệp lục.",
+      "ATP và NADPH sinh ra được sử dụng để tiếp tục quang phân li nước.",
+      "O2 được giải phóng ra khí quyển.",
+      "ATP và NADPH được tạo thành để cung cấp năng lượng cho pha tối."
+    ],
+    "c": 1,
+    "hint": "ATP và NADPH được dùng cho pha tối, không dùng để quang phân li nước."
+  },
+  {
+    "q": "Câu 45: Trong quang hợp, pha tối là pha:",
+    "a": [
+      "đồng hóa CO2 thành carbohydrate nhờ năng lượng từ ATP và NADPH.",
+      "chuyển hóa quang năng thành hóa năng trong ATP và NADPH.",
+      "khử H2O để hình thành carbohydrate từ ATP và NADPH.",
+      "chuyển hóa hóa năng trong CO2 thành hóa năng trong ATP."
+    ],
+    "c": 0,
+    "hint": "Pha tối cố định CO2 thành carbohydrate nhờ ATP và NADPH."
+  },
+  {
+    "q": "Câu 61: Nhóm thực vật nào sau đây là cây C4?",
+    "a": [
+      "xương rồng, thanh long, dứa.",
+      "Mía, ngô, rau dền.",
+      "Mía, thanh long, ngô.",
+      "Lúa, khoai, sắn."
+    ],
+    "c": 1,
+    "hint": "Mía, ngô, rau dền là thực vật C4."
+  },
+  {
+    "q": "Câu 10: Đặc điểm nào sau đây của thực vật CAM khác với thực vật C3 và C4?",
+    "a": [
+      "Có lục lạp ở tế bào mô giậu và tế bào bao bó mạch.",
+      "Pha tối gồm chu trình C4 và chu trình Calvin.",
+      "Có quá trình hô hấp sáng.",
+      "Có quá trình cố định CO2 xảy ra vào ban đêm."
+    ],
+    "c": 3,
+    "hint": "CAM cố định CO2 vào ban đêm để hạn chế mất nước."
+  },
+  {
+    "q": "Câu 79: Lượng nước thoát qua bề mặt lá phụ thuộc chủ yếu vào",
+    "a": [
+      "Độ dày tầng cutin và lượng nước rễ hút vào.",
+      "Độ dày của tầng cutin và diện tích lá.",
+      "Lượng nước rễ hút vào và diện tích lá.",
+      "Số lượng chất diệp lục có trong lá."
+    ],
+    "c": 1,
+    "hint": "Thoát hơi nước qua bề mặt lá phụ thuộc độ dày cutin và diện tích lá."
+  },
+  {
+    "q": "Câu 109: Vì sao người ta hay trồng xen canh cây họ Đậu với cây trồng khác để tăng năng suất?",
+    "a": [
+      "Cây họ Đậu có khả năng cung cấp dinh dưỡng cho các cây khác.",
+      "Cây họ Đậu có các vi khuẩn nốt sần giúp cố định nitrogen cung cấp cho cây.",
+      "Cây họ Đậu có khả năng tiết ra các chất xua đuổi côn trùng, sâu bọ.",
+      "Cây họ Đậu có khả năng tiết ra các chất kích thích tăng trưởng."
+    ],
+    "c": 1,
+    "hint": "Vi khuẩn nốt sần ở rễ cây họ Đậu cố định nitrogen."
+  },
+  {
+    "q": "Câu 110: Người ta thường nuôi bèo hoa dâu trên ruộng lúa. Xét về ý nghĩa sinh học, việc làm này có ý nghĩa gì?",
+    "a": [
+      "Bèo hoa dâu nổi trên mặt nước, giúp giữ nước cho ruộng lúa.",
+      "Bèo hoa dâu có khả năng quang hợp cung cấp oxygen cho ruộng lúa.",
+      "Rễ bèo hoa dâu có vi khuẩn lam giúp cố định nitrogen cung cấp cho cây.",
+      "Bèo hoa dâu có khả năng tiết ra các chất kích thích tăng trưởng."
+    ],
+    "c": 2,
+    "hint": "Bèo hoa dâu cộng sinh với vi khuẩn lam cố định nitrogen."
+  },
+  {
+    "q": "Câu 5: Nguyên tố khoáng đa lượng nào sau đây là thành phần cấu tạo của nucleic acid, phospholipid và ATP?",
+    "a": ["Phosphorus (P).", "Calcium (Ca).", "Potassium (K).", "Iron (Fe)."],
+    "c": 0,
+    "hint": "Phosphorus có trong nucleic acid, phospholipid và ATP."
+  },
+  {
+    "q": "Câu 34: Nguyên nhân nào sau đây làm tế bào lông hút luôn ưu trương so với dung dịch đất: (1) Rễ hấp thụ các ion khoáng từ đất và tích lũy các chất tan từ quá trình chuyển hóa vật chất. (2) Thoát hơi nước ở lá làm giảm lượng nước ở tế bào lông hút. (3) Rễ hấp thụ nước và tích lũy nước từ quá trình chuyển hóa vật chất. (4) Rễ tiết các chất làm phân giải các chất tan trong dung dịch đất.",
+    "a": ["1, 2.", "1, 3.", "1, 4.", "2, 3."],
+    "c": 0,
+    "hint": "Tích lũy chất tan và giảm lượng nước làm tăng áp suất thẩm thấu của lông hút."
+  },
+  {
+    "q": "Câu 35: Mô tả nào sau đây là đúng về cơ chế hấp thụ khoáng thụ động ở rễ?",
+    "a": [
+      "Chất khoáng hòa tan trong đất khuếch tán từ đất (nơi có nồng độ chất khoáng cao) vào rễ (nơi có nồng độ chất khoáng thấp).",
+      "Chất khoáng được vận chuyển từ đất vào rễ ngược chiều gradient nồng độ, nhờ các chất mang được hoạt hóa bằng năng lượng.",
+      "Chất khoáng được vận chuyển từ rễ vào đất ngược chiều gradient nồng độ, nhờ các chất mang được hoạt hóa bằng năng lượng.",
+      "Chất khoáng hòa tan trong đất khuếch tán từ đất (nơi có nồng độ chất khoáng thấp) vào rễ (nơi có nồng độ chất khoáng cao)."
+    ],
+    "c": 0,
+    "hint": "Hấp thụ thụ động là khuếch tán theo chiều gradient nồng độ từ cao đến thấp."
+  },
+  {
+    "q": "Câu 36: Rễ cây hấp thu khoáng từ đất theo cơ chế nào sau đây?",
+    "a": ["thẩm thấu.", "chủ động.", "thụ động.", "chủ động và thụ động."],
+    "c": 3,
+    "hint": "Rễ hấp thụ khoáng theo cả cơ chế chủ động và thụ động."
+  },
+  {
+    "q": "Câu 37: Sự hấp thụ khoáng theo cơ chế thụ động diễn ra theo nguyên lí nào sau đây?",
+    "a": ["nhập bào.", "chủ động.", "thẩm thấu.", "khuếch tán."],
+    "c": 3,
+    "hint": "Hấp thụ thụ động dựa trên khuếch tán."
+  },
+  {
+    "q": "Câu 6: Đặc điểm nào của tế bào lông hút giúp nó có thể hấp thụ nước từ đất theo cơ chế thẩm thấu?",
+    "a": [
+      "Có thành tế bào dày, thấm lớp cutin bên vững.",
+      "Nồng độ chất tan trong dịch bào luôn thấp hơn dịch ngoài môi trường đất.",
+      "Có không bào trung tâm lớn chứa nhiều chất hòa tan, tạo áp suất thẩm thấu cao.",
+      "Có khả năng bơm nước từ ngoài vào trong nhờ năng lượng ATP."
+    ],
+    "c": 2,
+    "hint": "Không bào lớn chứa nhiều chất tan tạo áp suất thẩm thấu cao."
+  },
+  {
+    "q": "Câu 53: Hai con đường vận chuyển nước và khoáng từ lông hút vào mạch gỗ của rễ là:",
+    "a": [
+      "con đường gian bào và con đường biểu bì.",
+      "con đường mạch gỗ và con đường mạch rây.",
+      "con đường tế bào chất và con đường biểu bì.",
+      "con đường gian bào và con đường tế bào chất."
+    ],
+    "c": 3,
+    "hint": "Nước và khoáng đi theo con đường gian bào và tế bào chất."
+  },
+  {
+    "q": "Câu 54: Trước khi đi vào mạch gỗ của rễ, nước và các chất khoáng phải đi qua cấu trúc nào sau đây?",
+    "a": ["Tế bào nội bì.", "Tế bào nhu mô vỏ.", "Đai Caspari.", "Khí khổng."],
+    "c": 2,
+    "hint": "Đai Caspari ở nội bì kiểm soát dòng nước và khoáng vào mạch gỗ."
+  },
+  {
+    "q": "Câu 55: Nước đi vào mạch gỗ theo con đường gian bào đến nội bì thì chuyển sang con đường tế bào chất nguyên nhân do:",
+    "a": [
+      "Tế bào nội bì có đai caspary thấm nước nên nước vẫn chuyển qua được.",
+      "Tế bào nội bì không thấm nước nên không vận chuyển qua được.",
+      "Tế bào nội bì có đai caspary không thấm nước nên nước không thấm qua được.",
+      "Áp suất thẩm thấu của tế bào nội bì thấp nên nước phải di chuyển sang con đường khác."
+    ],
+    "c": 2,
+    "hint": "Đai Caspari không thấm nước buộc nước chuyển sang con đường tế bào chất."
+  },
+  {
+    "q": "Câu 1: Khi nói về các dấu hiệu đặc trưng của trao đổi chất và chuyển hóa năng lượng, phát biểu nào sau đây đúng?",
+    "a": [
+      "Thực vật lấy các chất từ môi trường nhưng không có quá trình bài tiết các chất ra khỏi cơ thể.",
+      "Quá trình điều hòa trao đổi chất và chuyển hóa năng lượng chỉ xảy ra ở động vật mà không có ở thực vật.",
+      "Quá trình vận chuyển các chất từ bộ phận này đến bộ phận khác để đáp ứng nhu cầu của cơ thể xảy ra ở cả động vật và thực vật.",
+      "Quá trình đồng hóa các chất chỉ xảy ra ở sinh vật tự dưỡng mà không xảy ra ở sinh vật dị dưỡng."
+    ],
+    "c": 2,
+    "hint": "Vận chuyển các chất trong cơ thể diễn ra ở cả thực vật và động vật."
+  },
+  {
+    "q": "Câu 3: Nguồn năng lượng khởi đầu của sự sống trên Trái Đất là:",
+    "a": ["Năng lượng ánh sáng mặt trời.", "Hóa năng.", "Điện năng.", "Năng lượng phóng xạ."],
+    "c": 0,
+    "hint": "Ánh sáng mặt trời là nguồn năng lượng khởi đầu cho sự sống."
+  },
+  {
+    "q": "Câu 4: Sinh vật tự dưỡng là sinh vật có khả năng",
+    "a": [
+      "tự tổng hợp chất hữu cơ từ các chất vô cơ.",
+      "phân giải xác sinh vật khác để lấy chất hữu cơ.",
+      "tự tổng hợp chất hữu cơ từ các chất hữu cơ có sẵn.",
+      "tự tổng hợp các chất vô cơ từ các chất vô cơ có sẵn."
+    ],
+    "c": 0,
+    "hint": "Tự dưỡng tổng hợp chất hữu cơ từ chất vô cơ."
+  },
+  {
+    "q": "Câu 5: Sinh vật dị dưỡng là sinh vật",
+    "a": [
+      "tự tổng hợp chất hữu cơ từ các chất vô cơ nhờ năng lượng hấp thụ từ ánh sáng mặt trời.",
+      "tự tổng hợp chất hữu cơ từ các chất vô cơ nhờ năng lượng từ việc phân giải các chất hóa học.",
+      "lấy chất hữu cơ trực tiếp từ các sinh vật khác hoàn toàn nhờ năng lượng ánh sáng mặt trời.",
+      "lấy chất hữu cơ trực tiếp từ các sinh vật tự dưỡng hoặc từ các sinh vật dị dưỡng khác."
+    ],
+    "c": 3,
+    "hint": "Dị dưỡng lấy chất hữu cơ từ sinh vật khác."
+  },
+  {
+    "q": "Câu 6: Sinh vật tự dưỡng trên cạn điển hình là",
+    "a": ["nấm.", "thực vật.", "động vật.", "tảo."],
+    "c": 1,
+    "hint": "Thực vật trên cạn là sinh vật tự dưỡng điển hình."
+  },
+  {
+    "q": "Câu 8: Trong các sinh vật sau, sinh vật nào có khả năng tự dưỡng?",
+    "a": ["Bò.", "Gà.", "Vi khuẩn lam.", "Hổ."],
+    "c": 2,
+    "hint": "Vi khuẩn lam quang tự dưỡng."
+  },
+  {
+    "q": "Câu 9: Nhóm sinh vật nào sau đây gồm toàn các sinh vật dị dưỡng?",
+    "a": [
+      "Nấm men, trùng roi xanh, dê mèn.",
+      "Nấm hương, tảo nâu, giun đất.",
+      "Nấm mốc, vi khuẩn lam, cây bắt mồi.",
+      "Nấm rơm, vi khuẩn H.pylori, san hô."
+    ],
+    "c": 3,
+    "hint": "Nấm rơm, vi khuẩn H.pylori và san hô đều dị dưỡng."
+  },
+  {
+    "q": "Câu 55: Phát biểu nào sau đây đúng khi nói về mối quan hệ giữa trao đổi chất và chuyển hóa năng lượng?",
+    "a": [
+      "gắn bó mật thiết với nhau, diễn ra ở cấp độ tế bào.",
+      "không liên quan, trao đổi chất trước rồi mới chuyển hóa năng lượng.",
+      "gắn bó mật thiết với nhau, diễn ra ở cả cấp độ cơ thể lẫn tế bào.",
+      "không liên quan với nhau, diễn ra ở cấp độ tế bào."
+    ],
+    "c": 2,
+    "hint": "Trao đổi chất và chuyển hóa năng lượng gắn bó ở cả cấp tế bào và cơ thể."
+  },
+  {
+    "q": "Câu 3: Phát biểu nào sau đây đúng khi mô tả mối quan hệ giữa trao đổi chất cấp tế bào và cấp cơ thể?",
+    "a": [
+      "Cơ thể lấy chất dinh dưỡng từ môi trường cung cấp cho tế bào thực hiện quá trình đồng hóa và dị hóa.",
+      "Quá trình trao đổi chất ở cấp cơ thể diễn ra độc lập, không liên quan đến hoạt động của tế bào.",
+      "Tế bào trực tiếp lấy thức ăn từ môi trường ngoài mà không cần thông qua hệ thống cơ quan của cơ thể.",
+      "Chất thải sinh ra từ quá trình chuyển hóa tế bào được giữ lại toàn bộ để xây dựng cơ thể."
+    ],
+    "c": 0,
+    "hint": "Cơ thể cung cấp chất dinh dưỡng cho tế bào trao đổi chất."
+  },
+  {
+    "q": "Câu 59: Mạch gỗ được cấu tạo từ hai loại tế bào là",
+    "a": ["Biểu bì và nội bì.", "biểu bì và mạch ống.", "Quản bào và Mạch ống.", "biểu bì và lông hút."],
+    "c": 2,
+    "hint": "Mạch gỗ gồm quản bào và mạch ống."
+  },
+  {
+    "q": "Câu 60: Mạch rây (phloem) được cấu tạo từ",
+    "a": [
+      "tế bào ống rây và tế bào kèm.",
+      "quản bào và mạch ống.",
+      "quản bào và ống rây.",
+      "tế bào ống rây và mạch ống."
+    ],
+    "c": 0,
+    "hint": "Mạch rây gồm tế bào ống rây và tế bào kèm."
+  },
+  {
+    "q": "Câu 62: Chất hữu cơ chủ yếu được vận chuyển chủ yếu trong hệ mạch rây là",
+    "a": ["Fructose.", "Glucose.", "Sucrose.", "Ion khoáng."],
+    "c": 2,
+    "hint": "Mạch rây vận chuyển chủ yếu sucrose."
+  },
+  {
+    "q": "Câu 63: Thành phần chủ yếu của dịch mạch gỗ là",
+    "a": [
+      "nước và các ion khoáng.",
+      "nước và các chất hữu cơ.",
+      "các ion khoáng.",
+      "các hợp chất hữu cơ."
+    ],
+    "c": 0,
+    "hint": "Dịch mạch gỗ chủ yếu là nước và ion khoáng."
+  }
+];
+
+/* =========================================================
+   TIỆN ÍCH
+   ========================================================= */
+const LETTERS = ["A","B","C","D","E","F"];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+function shuffle(arr){
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* =========================================================
+   TRẠNG THÁI
+   ========================================================= */
+const card       = document.getElementById("card");
+const bar        = document.getElementById("bar");
+const sCorrect   = document.getElementById("sCorrect");
+const sWrong     = document.getElementById("sWrong");
+const sIndex     = document.getElementById("sIndex");
+
+let quiz = [];
+let idx = 0;
+let correct = 0;
+let wrong = 0;
+let answered = false;
+
+/* =========================================================
+   KHỞI TẠO
+   ========================================================= */
+function buildQuiz(){
+  return shuffle(QUESTIONS.map(item => {
+    const opts = item.a.map((text, i) => ({ text, isCorrect: i === item.c }));
+    shuffle(opts);
+    return { question: item.q, opts, hint: item.hint };
+  }));
+}
+
+function start(){
+  quiz = buildQuiz();
+  idx = 0; correct = 0; wrong = 0; answered = false;
+  updateStats();
+  renderQuestion();
+}
+
+/* =========================================================
+   THANH TRẠNG THÁI
+   ========================================================= */
+function updateStats(){
+  sCorrect.textContent = correct;
+  sWrong.textContent   = wrong;
+  sIndex.textContent   = Math.min(idx + 1, quiz.length) + "/" + quiz.length;
+  bar.style.width = ((correct + wrong) / quiz.length * 100) + "%";
+}
+
+/* =========================================================
+   HIỂN THỊ CÂU HỎI
+   ========================================================= */
+function renderQuestion(){
+  answered = false;
+  const q = quiz[idx];
+
+  card.innerHTML = `
+    <h2 class="qtext">${esc(q.question)}</h2>
+    <div class="options" id="options">
+      ${q.opts.map((o, i) => `
+        <button class="option" data-i="${i}">
+          <span class="badge">${LETTERS[i]}</span>
+          <span>${esc(o.text)}</span>
+        </button>`).join("")}
+    </div>
+
+    <div class="hint-wrap">
+      <button class="hint-btn" id="hintBtn" type="button">
+        <span class="bulb">💡</span> Xem gợi ý
+      </button>
+      <div class="hint-content" id="hintContent" hidden>
+        <strong>Gợi ý:</strong> ${esc(q.hint)}
+      </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+    <div class="actions">
+      <button class="btn" id="nextBtn" hidden>
+        ${idx === quiz.length - 1 ? "Xem kết quả 🎉" : "Câu tiếp theo →"}
+      </button>
+    </div>
+  `;
+
+  card.querySelectorAll(".option").forEach(btn => {
+    btn.addEventListener("click", () => choose(parseInt(btn.dataset.i, 10)));
+  });
+
+  const hintBtn = document.getElementById("hintBtn");
+  const hintContent = document.getElementById("hintContent");
+  hintBtn.addEventListener("click", () => {
+    const isHidden = hintContent.hasAttribute("hidden");
+    if (isHidden){
+      hintContent.removeAttribute("hidden");
+      hintBtn.innerHTML = '<span class="bulb">💡</span> Ẩn gợi ý';
+    } else {
+      hintContent.setAttribute("hidden", "");
+      hintBtn.innerHTML = '<span class="bulb">💡</span> Xem gợi ý';
+    }
+  });
+
+  document.getElementById("nextBtn").addEventListener("click", next);
+
+  updateStats();
+  bar.style.width = (idx / quiz.length * 100) + "%";
+}
+
+/* =========================================================
+   CHỌN ĐÁP ÁN
+   ========================================================= */
+function choose(picked){
+  if (answered) return;
+  answered = true;
+
+  const q = quiz[idx];
+  const buttons = [...card.querySelectorAll(".option")];
+  const isRight = q.opts[picked].isCorrect;
+
+  buttons.forEach((btn, i) => {
+    btn.disabled = true;
+    if (q.opts[i].isCorrect)      btn.classList.add("correct");
+    else if (i === picked)        btn.classList.add("wrong");
+    else                          btn.classList.add("dim");
+  });
+
+  const fb = document.getElementById("feedback");
+  if (isRight){
+    correct++;
+    fb.className = "feedback ok show";
+    fb.textContent = "✅ Chính xác! Làm tốt lắm.";
+  } else {
+    wrong++;
+    const rightText = q.opts.find(o => o.isCorrect).text;
+    fb.className = "feedback bad show";
+    fb.textContent = "❌ Chưa đúng. Đáp án đúng là: " + rightText;
+  }
+
+  document.getElementById("nextBtn").hidden = false;
+  updateStats();
+  bar.style.width = ((correct + wrong) / quiz.length * 100) + "%";
+}
+
+/* =========================================================
+   CÂU TIẾP THEO
+   ========================================================= */
+function next(){
+  idx++;
+  if (idx >= quiz.length) renderResult();
+  else renderQuestion();
+}
+
+/* =========================================================
+   KẾT QUẢ
+   ========================================================= */
+function renderResult(){
+  const total = quiz.length;
+  const pct = Math.round(correct / total * 100);
+
+  let title, msg;
+  if (pct === 100){ title = "Hoàn hảo! 🏆"; msg = "Bạn trả lời đúng toàn bộ " + total + " câu. Quá xuất sắc!"; }
+  else if (pct >= 80){ title = "Rất tốt! 🎯"; msg = "Kiến thức của bạn rất vững, chỉ cần ôn thêm vài câu nữa."; }
+  else if (pct >= 60){ title = "Khá ổn! 👍"; msg = "Bạn đã nắm được phần lớn nội dung, hãy xem lại các câu sai nhé."; }
+  else if (pct >= 40){ title = "Cố gắng thêm! 💪"; msg = "Hãy ôn lại lý thuyết từng bài rồi làm lại bài kiểm tra."; }
+  else { title = "Đừng nản! 🌱"; msg = "Mọi thứ đều bắt đầu từ việc luyện tập. Thử lại lần nữa nhé!"; }
+
+  card.innerHTML = `
+    <div class="result">
+      <div class="ring" style="--p:${pct}">
+        <div class="ring-in"><b>${pct}%</b><small>CHÍNH XÁC</small></div>
+      </div>
+      <h2>${title}</h2>
+      <p>${msg}</p>
+      <div class="pills">
+        <span class="pill ok">✅ Đúng: ${correct}</span>
+        <span class="pill bad">❌ Sai: ${wrong}</span>
+        <span class="pill">📋 Tổng: ${total} câu</span>
+      </div>
+      <button class="btn" id="restartBtn">🔄 Làm lại từ đầu</button>
+    </div>
+  `;
+
+  sIndex.textContent = total + "/" + total;
+  bar.style.width = "100%";
+  document.getElementById("restartBtn").addEventListener("click", start);
+}
+
+/* =========================================================
+   CHẾ ĐỘ SÁNG / TỐI
+   ========================================================= */
+const themeBtn = document.getElementById("themeBtn");
+const root = document.documentElement;
+
+function applyTheme(mode){
+  root.setAttribute("data-theme", mode);
+  try { localStorage.setItem("quiz-theme", mode); } catch(e){}
+}
+
+(function initTheme(){
+  let saved = null;
+  try { saved = localStorage.getItem("quiz-theme"); } catch(e){}
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  applyTheme(prefersDark ? "dark" : "light");
+})();
+
+themeBtn.addEventListener("click", () => {
+  applyTheme(root.getAttribute("data-theme") === "dark" ? "light" : "dark");
+});
+
+/* =========================================================
+   PHÍM TẮT
+   ========================================================= */
+document.addEventListener("keydown", e => {
+  if (idx >= quiz.length) return;
+  if (["1","2","3","4"].includes(e.key)){
+    const i = parseInt(e.key, 10) - 1;
+    const btn = card.querySelector(`.option[data-i="${i}"]`);
+    if (btn && !answered) btn.click();
+  }
+  if (e.key === "Enter"){
+    const nb = document.getElementById("nextBtn");
+    if (nb && !nb.hidden) nb.click();
+  }
+});
+
+/* =========================================================
+   BẮT ĐẦU
+   ========================================================= */
+start();
+</script>
+</body>
+</html>
